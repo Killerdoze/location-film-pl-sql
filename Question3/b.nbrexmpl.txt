@@ -1,0 +1,18 @@
+CREATE OR REPLACE FUNCTION nbrExSupport (n IN NUMBER, c IN VARCHAR2) RETURN NUMBER AS
+  v_nbr_ex NUMBER := 0;
+BEGIN
+  IF c = 'ANY' THEN
+    -- Si c vaut ANY, on compte le nombre total d'exemplaires du film n
+    SELECT COUNT(*) INTO v_nbr_ex FROM EXEMPLAIRE WHERE numFilm = n;
+  ELSE
+    -- Sinon, on compte le nombre d'exemplaires du film n avec le support c
+    SELECT COUNT(*) INTO v_nbr_ex FROM EXEMPLAIRE WHERE numFilm = n AND detailSupport = c;
+  END IF;
+  
+  RETURN v_nbr_ex;
+EXCEPTION
+  WHEN OTHERS THEN
+    -- Si une exception est levée, on renvoie une valeur nulle
+    RETURN NULL;
+END;
+

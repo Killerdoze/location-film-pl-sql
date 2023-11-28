@@ -1,0 +1,114 @@
+CREATE OR REPLACE TRIGGER TRIG_5
+BEFORE DELETE ON LOCATION
+FOR EACH ROW
+DECLARE
+  v_user VARCHAR2(30);
+BEGIN
+  SELECT USER INTO v_user FROM DUAL;
+  
+  IF v_user != 'utilisateur_autorise' THEN
+    RAISE_APPLICATION_ERROR(-20001, 'Attention, utilisateur non autorise !');
+  END IF;
+END;
+
+CREATE OR REPLACE TRIGGER trig_refuse_suppression
+BEFORE DELETE ON LOCATION
+FOR EACH ROW
+BEGIN
+  IF :OLD.dateEnvoi IS NOT NULL THEN
+    RAISE_APPLICATION_ERROR(-20001, 'Suppression impossible : la date d''envoi de l''exemplaire est renseignée.');
+  END IF;
+END;
+
+CREATE OR REPLACE TRIGGER trig_refuse_maj
+BEFORE INSERT OR UPDATE ON LOCATION
+FOR EACH ROW
+BEGIN
+  IF :NEW.dateRetour IS NOT NULL AND :NEW.dateEnvoi IS NULL THEN
+    RAISE_APPLICATION_ERROR(-20002, 'Insertion ou mise à jour impossible : la date d''envoi de l''exemplaire est manquante.');
+  END IF;
+END;
+
+CREATE OR REPLACE TRIGGER trig_affiche_message
+AFTER INSERT OR UPDATE OR DELETE ON LOCATION
+FOR EACH ROW
+DECLARE
+  message VARCHAR2(200);
+BEGIN
+    IF (NOT DELETING AND NOT UPDATING) THEN
+        DBMS_OUTPUT.PUT_LINE('La ligne avec le numéro d''exemplaire ' || :OLD.numExemplaire || ' a été insérée pour le login ' || :OLD.login || ' le ' || :OLD.dateLocation || '.');
+    ELSIF (UPDATING) THEN
+        DBMS_OUTPUT.PUT_LINE('La ligne avec le numéro d''exemplaire ' || :OLD.numExemplaire || ' a été mise à jour pour le login ' || :OLD.login || ' le ' || :OLD.dateLocation || '.');
+        DBMS_OUTPUT.PUT_LINE('Anciennes valeurs : envoi=' || :OLD.dateEnvoi || ', retour=' || :OLD.dateRetour);
+        DBMS_OUTPUT.PUT_LINE('Nouvelles valeurs : envoi=' || :NEW.dateEnvoi || ', retour=' || :NEW.dateRetour);
+    END IF;
+ end ;
+
+
+CREATE OR REPLACE TRIGGER trigBonus
+AFTER INSERT ON LOCATION
+FOR EACH ROW
+DECLARE
+nbre TABLEBONUS.nbrExLoues%type;
+BEGIN
+SELECT COUNT(*) INTO nbre FROM LOCATION
+WHERE login = :NEW.login;
+UPDATE TABLEBONUS
+SET nbrExLoues = nbre+1 WHERE login = :NEW.login;
+END;
+
+CREATE OR REPLACE TRIGGER trigBonus
+BEFORE INSERT ON LOCATION
+FOR EACH ROW
+DECLARE
+  nbre TABLEBONUS.nbrExLoues%type;
+  n1 CONSTANT NUMBER := 5;
+  n2 CONSTANT NUMBER := 10;
+  bonus NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO nbre FROM LOCATION
+  WHERE login = :NEW.login;
+  
+  IF nbre > 0 THEN
+    IF nbre < n1 THEN
+      bonus := 0.1;
+    ELSIF nbre < n2 THEN
+      bonus := 0.2;
+    ELSE
+      bonus := 0.4;
+    END IF;
+    
+    UPDATE TABLEBONUS
+    SET nbrExLoues = nbre+1, bonus = bonus
+    WHERE login = :NEW.login;
+  END IF;
+END;
+
+
+CREATE TRIGGER TRIG_1
+BEFORE INSERT ON LOCATION
+FOR EACH ROW
+BEGIN
+INSERT INTO TRACE
+VALUES(nbValLog+1,'Trigger 1');
+END;
+CREATE TRIGGER TRIG_2
+BEFORE INSERT ON LOCATION
+BEGIN
+INSERT INTO TRACE
+VALUES(nbValLog+1,'Trigger 2');
+END;
+CREATE TRIGGER TRIG_3
+AFTER INSERT ON LOCATION
+FOR EACH ROW
+BEGIN
+INSERT INTO TRACE
+VALUES(nbValLog+1,'Trigger 3');
+END;
+CREATE TRIGGER TRIG_4
+AFTER INSERT ON LOCATION
+BEGIN
+INSERT INTO TRACE
+VALUES(nbValLog+1,'Trigger 4');
+END;
+

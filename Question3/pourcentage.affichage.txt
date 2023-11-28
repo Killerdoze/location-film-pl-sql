@@ -1,0 +1,8 @@
+pourcentage.affichage
+DECLARE
+  nombre_exemplaires INTEGER;
+BEGIN
+  nombre_exemplaires := nbrexsupport(21, 'ANY');
+  DBMS_OUTPUT.PUT_LINE('Nombre d''exemplaires de film n°123 en support DVD : ' || nombre_exemplaires);
+
+END;

@@ -1,0 +1,35 @@
+CREATE OR REPLACE FUNCTION calcul_bonus_clients RETURN VARCHAR2 AS
+  v_login NUMBER;
+  v_nbr_ex_loues NUMBER;
+  v_bonus NUMBER(8,2);
+  n1 NUMBER := 6;
+  n2 NUMBER := 11;
+BEGIN
+  FOR c IN (
+    SELECT l.login, COUNT(*) AS nbrExLoues
+    FROM LOCATION l
+    WHERE l.dateLocation BETWEEN TO_DATE('2022-01-01', 'YYYY-MM-DD') AND TO_DATE('2022-12-31', 'YYYY-MM-DD')
+    GROUP BY l.login
+  ) LOOP
+    v_login := c.login;
+    v_nbr_ex_loues := c.nbrExLoues;
+    
+    IF v_nbr_ex_loues > 0 THEN
+      IF v_nbr_ex_loues < n1 THEN
+        v_bonus := v_nbr_ex_loues * 0.1;
+      ELSIF v_nbr_ex_loues < n2 THEN
+        v_bonus := v_nbr_ex_loues * 0.2;
+      ELSE
+        v_bonus := v_nbr_ex_loues * 0.4;
+      END IF;
+    ELSE
+      v_bonus := 0;
+    END IF;
+    
+    INSERT INTO tableBonus(login, bonus, nbrExLoues)
+    VALUES(v_login, v_bonus, v_nbr_ex_loues);
+  END LOOP;
+  
+  COMMIT;
+ 
+END;

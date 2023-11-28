@@ -1,0 +1,48 @@
+Create table INDIVIDU (
+numIndividu NUMBER,nomIndividu varchar(50),prenomIndividu varchar(50), PRIMARY KEY (numIndividu)   
+);
+
+Create table FILM (
+numFilm NUMBER,titre varchar(20),realisateur NUMBER, PRIMARY KEY (numFilm)  ,  CONSTRAINT fk FOREIGN KEY (realisateur)
+    REFERENCES INDIVIDU(numIndividu)
+);
+Create table EXEMPLAIRE (
+numExemplaire NUMBER,numFilm NUMBER,codeSupport varchar(20),vo varchar(10),probleme varchar(50),detailSupport varchar(20), PRIMARY KEY (numExemplaire), CONSTRAINT fk1 FOREIGN KEY (numFilm)
+    REFERENCES FILM(numFilm)   
+);
+Create table LOCATION (
+numExemplaire NUMBER,dateLocation Date,login NUMBER,dateEnvoi date,
+    dateRetour date,     
+    PRIMARY KEY (dateLocation,numExemplaire),
+    CONSTRAINT fk4 FOREIGN KEY (login)
+    REFERENCES CLIENT(login)
+);
+
+Create table CLIENT ( 
+login NUMBER, 
+    nomClient varchar(20), 
+    prenomClient varchar(20), 
+    motDePasse varchar(20), 
+    adresse varchar(20), 
+    PRIMARY KEY (login) 
+     
+);
+CREATE TABLE tableBonus (
+    login NUMBER,
+    bonus NUMBER(8,2),
+    nbrExLoues NUMBER(8)
+);
+
+CREATE TABLE statistiques (
+  numFilm NUMBER,
+  nbrEx INTEGER,
+  pctgeDVD NUMBER(5,2),
+  pctgeVHS NUMBER(5,2)
+);
+
+CREATE TABLE TRACE (
+    numLog INTEGER,
+    message VARCHAR2(255)
+);
+
+

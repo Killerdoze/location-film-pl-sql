@@ -1,0 +1,25 @@
+CREATE OR REPLACE PACKAGE Statistics AS
+  PROCEDURE countFilmsWithNoExemplary;
+  FUNCTION percentageExemplaryWithoutProblem RETURN NUMBER;
+END Statistics;
+
+CREATE OR REPLACE PACKAGE BODY Statistics AS
+    PROCEDURE countFilmsWithNoExemplary AS
+    v_count NUMBER;
+  BEGIN
+    SELECT COUNT(DISTINCT numFilm) INTO v_count FROM FILM WHERE numFilm NOT IN (SELECT numFilm FROM EXEMPLAIRE);
+    DBMS_OUTPUT.PUT_LINE('Le nombre de films pour lesquels on ne possède aucun exemplaire est : ' || v_count);
+  END countFilmsWithNoExemplary; 
+
+
+  FUNCTION percentageExemplaryWithoutProblem RETURN NUMBER AS
+    v_total NUMBER;
+    v_no_problem NUMBER;
+  BEGIN
+    SELECT COUNT(*) INTO v_total FROM EXEMPLAIRE;
+    SELECT COUNT(*) INTO v_no_problem FROM EXEMPLAIRE WHERE numExemplaire = '';
+    RETURN v_no_problem/v_total*100;
+  END percentageExemplaryWithoutProblem;
+END Statistics;
+
+

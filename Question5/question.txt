@@ -1,0 +1,7 @@
+Lors d'une insertion dans la table location dans le cas de trig1 pour chaque ligne on insere la resultat de nbvallog et trigger1 comme message avant l'insertion ,dans le cas de trig2 on insere la resultat de nbvallog et trigger2 comme message avant l'insertion une seule fois , par contre ans le cas de trig3 pour chaque ligne on insere la resultat de nbvallog et trigger3 comme messageapres l'insertion ,dans le cas de trig4 on insere la resultat de nbvallog et trigger4 comme message aprés l'insertion une seule fois
+
+1) Le déclencheur TRIG_1 sera activé avant l'insertion de chaque ligne dans la table LOCATION, car il est défini comme un déclencheur BEFORE ROW.
+
+2) Ensuite, le déclencheur TRIG_2 sera activé avant l'insertion de chaque ligne dans la table LOCATION, car il est également défini comme un déclencheur BEFORE ROW.
+
+3) Après l'insertion de chaque ligne dans la table LOCATION, les déclencheurs TRIG_3 et TRIG_4 seront activés dans l'ordre où ils ont été créés, car ils sont tous deux des déclencheurs AFTER STATEMENT .

@@ -1,0 +1,6 @@
+UPDATE exemplaire SET codeSupport = 'DVD' 
+WHERE numExemplaire IN (1, 2, 3, 4, 5, 21);
+UPDATE exemplaire SET codeSupport = 'VHS' 
+WHERE numExemplaire IN (6, 9, 10, 7, 8, 10);
+
+select * from exemplaire ;

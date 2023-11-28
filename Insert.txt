@@ -1,0 +1,171 @@
+///////////////////////////////////////client /////////////////////////////////////////////////////////////////////////
+CREATE SEQUENCE SQ1 START WITH 1 INCREMENT BY 1;
+DECLARE
+  i NUMBER := 0;
+BEGIN
+  WHILE i < 10 LOOP
+    INSERT INTO CLIENT(login, nomClient, prenomClient, motDePasse, adresse)
+    VALUES(SQ1.NEXTVAL, 'Nom de famille ' || i, 'Prénom ' || i, 'password', 'Adresse ' || i);
+    i := i + 1;
+  END LOOP;
+  COMMIT;
+END;
+///////////////////////////////////individu///////////////////////////////////////
+CREATE SEQUENCE SQ2 START WITH 1 INCREMENT BY 1;
+DECLARE
+  i NUMBER := 1;
+BEGIN
+  WHILE i <= 10 LOOP
+    INSERT INTO INDIVIDU(numIndividu, nomIndividu, prenomIndividu)
+    VALUES(SQ2.NEXTVAL, 'Nom de famille de lindividue num' || i, 'Prénom de lindividue num ' || i);
+    i := i + 1;
+  END LOOP;
+  COMMIT;
+END;
+INSERT INTO INDIVIDU(numIndividu, nomIndividu, prenomIndividu)
+    VALUES(1091, 'Amine','ahmed');
+/////////////////////////////////////////film///////////////////////////////////////////////
+CREATE SEQUENCE SQ3 START WITH 1 INCREMENT BY 1;
+DECLARE
+  i NUMBER := 1;
+  rand_realisateur NUMBER;
+BEGIN
+  WHILE i <= 10 LOOP
+    -- Sélectionne un numéro de réalisateur aléatoire à partir de la table INDIVIDU
+    SELECT numIndividu INTO rand_realisateur FROM (SELECT numIndividu FROM INDIVIDU ORDER BY DBMS_RANDOM.VALUE) WHERE rownum = 1;
+    
+    -- Insère un film avec le réalisateur aléatoire
+    INSERT INTO FILM(numFilm, titre, realisateur)
+    VALUES(SQ3.NEXTVAL, 'Titre ' || i, rand_realisateur);
+    i := i + 1;
+  END LOOP;
+  COMMIT;
+END;
+INSERT INTO FILM(numFilm, titre, realisateur)
+SELECT SQ3.NEXTVAL, 'Titre du film', 1091 FROM DUAL;
+
+//////////////////////////////////////exemplaire///////////////////////////////////
+CREATE SEQUENCE SQ4 START WITH 1 INCREMENT BY 1;
+DECLARE
+  i NUMBER := 1;
+  rand_film NUMBER;
+BEGIN
+  WHILE i <= 10 LOOP
+    -- Sélectionne un numéro de film aléatoire à partir de la table FILM
+    SELECT numFilm INTO rand_film FROM (SELECT numFilm FROM FILM ORDER BY DBMS_RANDOM.VALUE) WHERE rownum = 1;
+    
+    -- Insère un exemplaire avec le film aléatoire
+    INSERT INTO EXEMPLAIRE(numExemplaire, numFilm, codeSupport, vo, probleme, detailSupport)
+    VALUES(SQ4.NEXTVAL, rand_film, 'Code de support ' || i, 'VO', 'Problème ' || i, 'Delais de support ' || i);
+    i := i + 1;
+  END LOOP;
+  COMMIT;
+END;
+DECLARE
+  v_num_film NUMBER;
+BEGIN
+  -- Sélectionne le numéro de film correspondant à l'individu numéro 1091
+  SELECT numFilm INTO v_num_film FROM FILM WHERE realisateur = 1091;
+
+  -- Insère un nouvel exemplaire avec le numéro de film sélectionné
+  INSERT INTO EXEMPLAIRE(numExemplaire, numFilm, codeSupport, vo, probleme, detailSupport)
+  VALUES (SQ4.NEXTVAL, v_num_film, 'Code de support', 'VO', 'Problème', 'Détail de support');
+  
+  COMMIT;
+END;
+
+//////////////////////////////////location//////////////////////////////////////
+DECLARE
+  i NUMBER := 1;
+  rand_client NUMBER;
+  rand_exemplaire NUMBER;
+BEGIN
+  WHILE i <= 10 LOOP
+    -- Sélectionne un numéro de client aléatoire à partir de la table CLIENT
+    SELECT login INTO rand_client FROM (SELECT login FROM CLIENT ORDER BY DBMS_RANDOM.VALUE) WHERE rownum = 1;
+    
+    -- Sélectionne un numéro d'exemplaire aléatoire à partir de la table EXEMPLAIRE
+    SELECT numExemplaire INTO rand_exemplaire FROM (SELECT numExemplaire FROM EXEMPLAIRE ORDER BY DBMS_RANDOM.VALUE) WHERE rownum = 1;
+    
+    -- Insère une location avec le client et l'exemplaire aléatoires
+    INSERT INTO LOCATION(numExemplaire, dateLocation, login, dateEnvoi, dateRetour)
+    VALUES(rand_exemplaire, SYSDATE-i, rand_client, SYSDATE-i, SYSDATE-i+2);
+    i := i + 1;
+  END LOOP;
+  COMMIT;
+END;
+DECLARE
+  i NUMBER := 1;
+  rand_client NUMBER;
+  rand_exemplaire NUMBER;
+BEGIN
+  WHILE i <= 10 LOOP
+    -- Sélectionne un numéro de client aléatoire à partir de la table CLIENT
+    SELECT login INTO rand_client FROM (SELECT login FROM CLIENT ORDER BY DBMS_RANDOM.VALUE) WHERE rownum = 1;
+    
+    -- Sélectionne un numéro d'exemplaire aléatoire à partir de la table EXEMPLAIRE
+    SELECT numExemplaire INTO rand_exemplaire FROM (SELECT numExemplaire FROM EXEMPLAIRE ORDER BY DBMS_RANDOM.VALUE) WHERE rownum = 1;
+    
+    -- Génère une date aléatoire en janvier 2022 pour la colonne dateLocation
+    DECLARE
+      start_date DATE := TO_DATE('2022-01-01', 'YYYY-MM-DD');
+      end_date DATE := TO_DATE('2022-01-31', 'YYYY-MM-DD');
+      random_days NUMBER := DBMS_RANDOM.VALUE(0, end_date - start_date);
+      random_date DATE := start_date + random_days;
+    BEGIN
+      -- Insère une location avec le client et l'exemplaire aléatoires
+      INSERT INTO LOCATION(numExemplaire, dateLocation, login, dateEnvoi, dateRetour)
+      VALUES(rand_exemplaire, random_date, rand_client, SYSDATE-i, SYSDATE-i+2);
+    END;
+    i := i + 1;
+  END LOOP;
+  COMMIT;
+END;
+
+///////////////////////////bonusclient///////////////////////////////////////////inserer des données a la table bonus en2022
+DECLARE
+  v_login NUMBER;
+  v_nbr_ex_loues NUMBER;
+  v_bonus NUMBER(8,2);
+  n1 NUMBER := 6;
+  n2 NUMBER := 11;
+BEGIN
+  FOR c IN (
+    SELECT l.login, COUNT(*) AS nbrExLoues
+    FROM LOCATION l
+    WHERE l.dateLocation BETWEEN TO_DATE('2022-01-01', 'YYYY-MM-DD') AND TO_DATE('2022-12-31', 'YYYY-MM-DD')
+    GROUP BY l.login
+  ) LOOP
+    v_login := c.login;
+    v_nbr_ex_loues := c.nbrExLoues;
+    
+    IF v_nbr_ex_loues > 0 THEN
+      IF v_nbr_ex_loues < n1 THEN
+        v_bonus := v_nbr_ex_loues * 0.1;
+      ELSIF v_nbr_ex_loues < n2 THEN
+        v_bonus := v_nbr_ex_loues * 0.2;
+      ELSE
+        v_bonus := v_nbr_ex_loues * 0.4;
+      END IF;
+    ELSE
+      v_bonus := 0;
+    END IF;
+    
+    INSERT INTO tableBonus(login, bonus, nbrExLoues)
+    VALUES(v_login, v_bonus, v_nbr_ex_loues);
+  END LOOP;
+  
+  COMMIT;
+END;
+
+
+
+
+
+
+
+
+
+
+
+

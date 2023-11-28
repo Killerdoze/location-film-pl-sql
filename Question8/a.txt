@@ -1,0 +1,5 @@
+le déclencheur "trigBonus" compte le nombre d'enregistrements dans la table "LOCATION" pour un certain "login", et met à jour la table "TABLEBONUS" en ajoutant 1 au nombre d'exemplaires loués pour ce "login".
+
+Cependant, le déclencheur ne fonctionne pas comme attendu lors d'une insertion dans la table "LOCATION". Cela est dû au phénomène de "mutating table", qui se produit lorsqu'une déclaration DML (Data Manipulation Language) telle que INSERT, UPDATE ou DELETE est exécutée sur une table, et qu'un déclencheur essaie d'accéder à la même table.
+explication mutating table :
+When a table is mutating, it is changing. If the changing is taking place and you try to make another change in the middle of the first change, Oracle will issue a mutating table error with the error code ORA-04091

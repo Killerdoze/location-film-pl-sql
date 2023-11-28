@@ -1,0 +1,6 @@
+table bonus :::::::::::::::::
+SELECT c.nomClient, c.prenomClient, SUM(b.bonus) as bonus_total
+FROM client c
+JOIN tableBonus b ON c.login = b.login
+GROUP BY c.login, c.nomClient, c.prenomClient
+ORDER BY bonus_total DESC;

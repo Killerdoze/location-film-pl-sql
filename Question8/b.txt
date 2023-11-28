@@ -1,0 +1,1 @@
+tous simplement CHANGER AFTER AVEC Before Pour éviter le phénomène de mutating table et ajouter les conditions de la 2éme question

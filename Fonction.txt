@@ -1,0 +1,119 @@
+//////////////////////////////////////////////////////////////////fonction count/////////////////////////////////////////
+FUNCTION nbreFilms(realisateur_id NUMBER) RETURN NUMBER AS 
+    nb_films NUMBER; 
+BEGIN 
+    SELECT COUNT(*) INTO nb_films 
+    FROM FILM 
+    WHERE realisateur = realisateur_id; 
+     
+    RETURN nb_films; 
+END ;
+////////////////////////////////////////////calculbonus client//////////////////////////////////////////////
+CREATE OR REPLACE FUNCTION calcul_bonus_clients RETURN VARCHAR2 AS
+  v_login NUMBER;
+  v_nbr_ex_loues NUMBER;
+  v_bonus NUMBER(8,2);
+  n1 NUMBER := 6;
+  n2 NUMBER := 11;
+BEGIN
+  FOR c IN (
+    SELECT l.login, COUNT(*) AS nbrExLoues
+    FROM LOCATION l
+    WHERE l.dateLocation BETWEEN TO_DATE('2022-01-01', 'YYYY-MM-DD') AND TO_DATE('2022-12-31', 'YYYY-MM-DD')
+    GROUP BY l.login
+  ) LOOP
+    v_login := c.login;
+    v_nbr_ex_loues := c.nbrExLoues;
+    
+    IF v_nbr_ex_loues > 0 THEN
+      IF v_nbr_ex_loues < n1 THEN
+        v_bonus := v_nbr_ex_loues * 0.1;
+      ELSIF v_nbr_ex_loues < n2 THEN
+        v_bonus := v_nbr_ex_loues * 0.2;
+      ELSE
+        v_bonus := v_nbr_ex_loues * 0.4;
+      END IF;
+    ELSE
+      v_bonus := 0;
+    END IF;
+    
+    INSERT INTO tableBonus(login, bonus, nbrExLoues)
+    VALUES(v_login, v_bonus, v_nbr_ex_loues);
+  END LOOP;
+  
+  COMMIT;
+ 
+END;
+
+/////////////////////////////////////////pourcentage//////////////////////////////////////////////////////
+CREATE OR REPLACE FUNCTION Pourcentage(n1 IN NUMBER, n2 IN NUMBER) RETURN NUMBER IS
+  v_pct NUMBER(6,2);
+BEGIN
+  IF n2 <> 0 THEN
+    v_pct := (n1 / n2) * 100;
+  ELSE
+    v_pct := 0;
+  END IF;
+  
+  RETURN ROUND(v_pct, 2);
+END;
+/////////////////////////////////////////nbrexsupport//////////////////////////////////////////////////////
+CREATE OR REPLACE FUNCTION nbrExSupport (n IN NUMBER, c IN VARCHAR2) RETURN NUMBER AS
+  v_nbr_ex NUMBER := 0;
+BEGIN
+  IF c = 'ANY' THEN
+    -- Si c vaut ANY, on compte le nombre total d'exemplaires du film n
+    SELECT COUNT(*) INTO v_nbr_ex FROM EXEMPLAIRE WHERE numFilm = n;
+  ELSE
+    -- Sinon, on compte le nombre d'exemplaires du film n avec le support c
+    SELECT COUNT(*) INTO v_nbr_ex FROM EXEMPLAIRE WHERE numFilm = n AND codeSupport = c;
+  END IF;
+  
+  RETURN v_nbr_ex;
+EXCEPTION
+  WHEN OTHERS THEN
+    -- Si une exception est levée, on renvoie une valeur nulle
+    RETURN NULL;
+END;
+
+////////////////////////////////////////remplirStat/////////////////////////////////////////////////////////
+CREATE OR REPLACE PROCEDURE remplirStat AS
+  v_tot_ex NUMBER;
+  v_dvd_ex NUMBER;
+  v_vhs_ex NUMBER;
+BEGIN
+  FOR f IN (SELECT numFilm FROM FILM) LOOP
+    -- Calcul du nombre total d'exemplaires du film f
+    SELECT COUNT(*) INTO v_tot_ex FROM EXEMPLAIRE WHERE numFilm = f.numFilm;
+    
+    -- Calcul du nombre d'exemplaires DVD et VHS du film f
+    SELECT COUNT(*) INTO v_dvd_ex FROM EXEMPLAIRE WHERE numFilm = f.numFilm AND codeSupport = 'DVD';
+    SELECT COUNT(*) INTO v_vhs_ex FROM EXEMPLAIRE WHERE numFilm = f.numFilm AND codeSupport = 'VHS';
+    
+    -- Insertion des données dans la table statistiques
+	
+    IF v_tot_ex > 0 THEN
+  INSERT INTO STATISTIQUES (numFilm, nbrEX, pctgeDVD, pctgeVHS)
+  VALUES (f.numFilm, v_tot_ex, v_dvd_ex/v_tot_ex*100, v_vhs_ex/v_tot_ex*100);
+ELSE
+  INSERT INTO STATISTIQUES  (numFilm, nbrEX, pctgeDVD, pctgeVHS)
+  VALUES (f.numFilm, 0, 0, 0);
+END IF;
+
+  END LOOP;
+  
+  COMMIT;
+END;				(Appel :EXEC remplirStat;
+
+-- Affichage des données de la table statistiques groupées par numFilm
+SELECT numFilm, SUM(nbrEX) AS nbrEX, AVG(pctgeDVD) AS pctgeDVD, AVG(pctgeVHS) AS pctgeVHS
+FROM STATISTIQUES
+GROUP BY numFilm;)
+
+///////////////////////////////////////////////////vallog/////////////////////////////////////////////////////////////
+CREATE OR REPLACE FUNCTION nbValLog RETURN INTEGER AS
+nbval INTEGER;
+BEGIN
+SELECT COUNT(*) INTO nbval FROM TRACE; RETURN nbval;
+END;
+
